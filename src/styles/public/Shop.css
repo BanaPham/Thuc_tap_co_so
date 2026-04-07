@@ -9,26 +9,27 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow-y: auto;
-}
-
-body::-webkit-scrollbar {
-  display: none;
 }
 
 .shop-container {
     background-color: #f5f5f5;
     margin-top: 12vh;
     width: 100%;
-    min-height: 88vh;
+    height: 88vh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+}
+
+.shop-container::-webkit-scrollbar {
+  display: none;
 }
 
 .shop-header {
     margin: 0 200px;
     margin-bottom: 20px;
-    height: 300px;
+    height: 300px !important; 
+    flex-shrink: 0;
     background-image: url('../../pages/public/assets/bia-shop.jpg');
     background-size: cover;
     display: flex;
@@ -248,6 +249,7 @@ body::-webkit-scrollbar {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
     gap: 20px; 
     width: 100%;
+    margin-bottom: 50px;
 }
 
 .each-product {
