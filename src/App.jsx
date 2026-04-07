@@ -5,6 +5,7 @@ import Header from './pages/public/Header'
 import Home from './pages/public/Home'
 import Product from './pages/public/Product'
 import Cart from './pages/public/Cart'
+import Shop from './pages/public/Shop'
 const MainLayout = () => {
   return (
     <>
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/product" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/shop" element={<Shop />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -10,9 +10,24 @@ import selling from './assets/selling.png';
 import sport from './assets/sport.png';
 import qc1 from './assets/quangcao1.png';
 import qc2 from './assets/quangcao2.png';
-import product from './assets/muado.jpg';
+import productImg from './assets/muado.jpg';
 
 export default function Home() {
+    const products = [
+        { id: 1, name: "The Java Handbook siêu dài abc xyz 1", price: 29.99, rating: 4, sold: "1.2k", image: productImg },
+        { id: 2, name: "Clean Code: A Handbook of Agile Software Craftsmanship", price: 35.50, rating: 5, sold: "800", image: productImg },
+        { id: 3, name: "JavaScript: The Good Parts", price: 25.00, rating: 4, sold: "2.5k", image: productImg },
+        { id: 4, name: "Design Patterns: Elements of Reusable Object-Oriented Software", price: 45.99, rating: 5, sold: "500", image: productImg },
+        { id: 5, name: "Pragmatic Programmer, The: From Journeyman to Master", price: 39.00, rating: 4, sold: "1.1k", image: productImg },
+        { id: 6, name: "Introduction to Algorithms, 3rd Edition", price: 60.00, rating: 5, sold: "300", image: productImg },
+        { id: 7, name: "Cracking the Coding Interview", price: 28.50, rating: 4, sold: "4.2k", image: productImg },
+        { id: 8, name: "Refactoring: Improving the Design of Existing Code", price: 42.00, rating: 5, sold: "150", image: productImg },
+    ];
+
+    const renderRating = (score) => {
+        return "⭐".repeat(score) + "☆".repeat(5 - score);
+    };
+
     return (
         <div className='home'>
             {/* Thanh nav trái */}
@@ -61,166 +76,29 @@ export default function Home() {
 
                 {/* Sản phẩm */}
                 <div className='home_products'>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
+                    {products.map((item) => (
+                        <div className='product' key={item.id}>
+                            <img
+                                src={item.image}
+                                alt={item.name}
+                                className="product_img"
+                            />
 
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
+                            <div className="product_name">
+                                {item.name}
+                            </div>
 
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
+                            <div className="product_rating">
+                                {renderRating(item.rating)} 
+                                <span className="product_sold">Đã bán {item.sold}</span>
+                            </div>
 
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
+                            <div className="product_bottom">
+                                <span className="product_price">${item.price}</span>
+                                <button className="product_btn">Add to Cart</button>
+                            </div>
                         </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
-                    <div className='product'>
-                        <img
-                            src={product}
-                            alt="product"
-                            className="product_img"
-                        />
-
-                        <div className="product_name">
-                            The Java Handbook siêu dài abc xyz 123456
-                        </div>
-
-                        <div className="product_rating">
-                            ⭐⭐⭐⭐☆ <span className="product_sold">Đã bán 1.2k</span>
-                        </div>
-
-                        <div className="product_bottom">
-                            <span className="product_price">$29.99</span>
-                            <button className="product_btn">Add to Cart</button>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>
