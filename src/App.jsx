@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import Login from './pages/public/Login'
 import Header from './pages/public/Header'
 import Home from './pages/public/Home'
-import Product from './pages/public/Product'
 import Cart from './pages/public/Cart'
 import Shop from './pages/public/Shop'
+import Product from './pages/public/Product'
+import Account from './pages/public/Account'
+
 const MainLayout = () => {
   return (
     <>
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="/product" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/account" element={<Navigate to="/account/profile" replace />} />
+          <Route path="/account/:active_tab" element={<Account />} />
         </Route>
       </Routes>
     </BrowserRouter>

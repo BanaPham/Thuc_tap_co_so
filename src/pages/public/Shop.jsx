@@ -7,7 +7,7 @@ export default function Shop() {
     const shopData = {
         name: "The Artisan Collective",
         avatar: avt,
-        rating: 4.8,
+        rating: 4.2,
         reviews: "1.2k",
         description: "Unique, ethically sourced handmade goods from global artisans. Since 2018.",
         products: 158,
@@ -52,7 +52,8 @@ export default function Shop() {
 
     // Rating 
     const renderStars = (score) => {
-        return "⭐".repeat(score) + "☆".repeat(5 - score);
+        const positiveStars = Math.round(score); 
+        return "⭐".repeat(positiveStars) + "☆".repeat(5 - positiveStars);
     };
 
     // Lưu voucher
@@ -150,7 +151,7 @@ export default function Shop() {
                                     {item.name}
                                 </div>
 
-                                <div className="shop-product-rating">
+                                <div className="rating">
                                     {renderStars(item.rating)} 
                                     <span className="product_sold">Đã bán {item.sold}</span>
                                 </div>
@@ -162,6 +163,8 @@ export default function Shop() {
                             </div>
                         ))}
                     </div>
+
+                    <p className='product-footer'>Không còn sản phẩm nào!</p>
                 </div>
             </div>
         </div>
