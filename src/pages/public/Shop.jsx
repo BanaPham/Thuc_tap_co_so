@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/public/Shop.css';
 import avt from './assets/avt-shop.jpg';
 import productImg from './assets/muado.jpg';
 
 export default function Shop() {
+    const navigate = useNavigate();
+
     const shopData = {
         name: "The Artisan Collective",
         avatar: avt,
@@ -62,6 +65,10 @@ export default function Shop() {
         if (!savedVouchers.includes(id)) {
             setSavedVouchers([...savedVouchers, id]);
         }
+    };
+
+    const handleProductClick = (id) => {
+        navigate(`/product/${id}`); 
     };
 
     return (
@@ -140,7 +147,11 @@ export default function Shop() {
                     <h3>Sản phẩm</h3>
                     <div className='shop-item'>
                         {products.map((item) => (
-                            <div className='each-product' key={item.id}>
+                            <div 
+                                className='each-product' 
+                                key={item.id}
+                                onClick={() => handleProductClick(item.id)}
+                            >
                                 <img
                                     src={item.image}
                                     alt={item.name}

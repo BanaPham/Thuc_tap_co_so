@@ -29,7 +29,7 @@ export default function Account() {
     });
 
     const [orderedHistory, setOrderedHistory] = useState([
-        { key: 1, status: "Đã giao", name: "Sản phẩm 1", quantity: "1", price: "$30.00", date: "7/11/2025", review: "Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt, Sản phẩm tốt", rating: 5, reviewDate: "08/11/2025" },
+        { key: 1, status: "Đã giao", name: "Sản phẩm 1", quantity: "1", price: "$30.00", date: "7/11/2025", review: "Sản phẩm tốt", rating: 5, reviewDate: "08/11/2025" },
         { key: 2, status: "Đang giao", name: "Sản phẩm 2", quantity: "2", price: "$30.00", date: "10/11/2025", review: "", rating: 0, reviewDate: ""},
         { key: 3, status: "Đã giao", name: "Sản phẩm 1", quantity: "1", price: "$30.00", date: "7/11/2025", review: "", rating: 0, reviewDate: "" },
         { key: 4, status: "Đang giao", name: "Sản phẩm 2", quantity: "3", price: "$30.00", date: "10/11/2025", review: "", rating: 0, reviewDate: ""},

@@ -32,7 +32,7 @@ export default function App() {
 
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/product" element={<Product />} />
+          <Route path="/product/:id" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/account" element={<Navigate to="/account/profile" replace />} />

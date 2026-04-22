@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom' 
+import { Link, useNavigate, useParams } from 'react-router-dom' 
 import '../../styles/public/Product.css';
 import itemImage from './assets/quanao.jpg';
 import itemImage2 from './assets/quanao2.jpg';
@@ -8,6 +8,8 @@ import itemImage4 from './assets/quanao4.jpg';
 import avt from './assets/avt-shop.jpg';
 
 export default function Product() {
+    const { id } = useParams();
+    
     const productData = {
         name: "Áo Hoodie Thời Trang Unisex",
         rating: 4.8,

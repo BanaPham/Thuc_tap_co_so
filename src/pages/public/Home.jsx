@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/public/Home.css';
 import book from './assets/book.png';
 import cosmetics from './assets/cosmetics.png';
@@ -13,6 +14,8 @@ import qc2 from './assets/quangcao2.png';
 import productImg from './assets/muado.jpg';
 
 export default function Home() {
+    const navigate = useNavigate();
+
     const products = [
         { id: 1, name: "The Java Handbook siêu dài abc xyz 1", price: 29.99, rating: 4, sold: "1.2k", image: productImg },
         { id: 2, name: "Clean Code: A Handbook of Agile Software Craftsmanship", price: 35.50, rating: 5, sold: "800", image: productImg },
@@ -26,6 +29,10 @@ export default function Home() {
 
     const renderRating = (score) => {
         return "⭐".repeat(score) + "☆".repeat(5 - score);
+    };
+
+    const handleProductClick = (id) => {
+        navigate(`/product/${id}`); 
     };
 
     return (
@@ -77,7 +84,11 @@ export default function Home() {
                 {/* Sản phẩm */}
                 <div className='home_products'>
                     {products.map((item) => (
-                        <div className='product' key={item.id}>
+                        <div 
+                            className='product' 
+                            key={item.id}
+                            onClick={() => handleProductClick(item.id)}
+                        >
                             <img
                                 src={item.image}
                                 alt={item.name}
