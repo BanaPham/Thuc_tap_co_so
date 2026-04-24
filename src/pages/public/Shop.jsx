@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import '../../styles/public/Shop.css';
 import avt from './assets/avt-shop.jpg';
 import productImg from './assets/muado.jpg';
 
 export default function Shop() {
     const navigate = useNavigate();
+    const { name } = useParams();
+
+    const decodedName = name ? decodeURIComponent(name) : "";
 
     const shopData = {
-        name: "The Artisan Collective",
+        name: decodedName,
         avatar: avt,
         rating: 4.2,
         reviews: "1.2k",

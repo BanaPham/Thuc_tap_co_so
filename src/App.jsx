@@ -34,7 +34,7 @@ export default function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/product/:id" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/shop" element={<Shop />} />
+          <Route path="/shop/:name" element={<Shop />} />
           <Route path="/account" element={<Navigate to="/account/profile" replace />} />
           <Route path="/account/:active_tab" element={<Account />} />
         </Route>

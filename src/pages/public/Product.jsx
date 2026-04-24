@@ -12,7 +12,7 @@ export default function Product() {
     
     const productData = {
         name: "Áo Hoodie Thời Trang Unisex",
-        rating: 4.8,
+        rating: 4,
         sales: "1.2k",
         price: "121.000",
         description: "Sản phẩm chất liệu nỉ bông cao cấp, giữ ấm tốt và cực kỳ thoáng khí. Thiết kế trẻ trung phù hợp cho cả nam và nữ.",
@@ -26,17 +26,30 @@ export default function Product() {
         ]
     };
 
-    const shopData = {
-            name: "The Artisan Collective",
-            avatar: avt,
-            rating: 4.2,
-            reviews: "1.2k",
-            description: "Unique, ethically sourced handmade goods from global artisans. Since 2018.",
-            products: 158,
-            followers: 8200,
-            sales: "45k"
-        };
+    const initialComments = [
+        { id: 1, user: "Nguyễn Văn A", rating: 5, comment: "Áo đẹp lắm mọi người ơi, vải dày dặn!", reviewDate: "20/03/2024" },
+        { id: 2, user: "Trần Thị B", rating: 4, comment: "Giao hàng nhanh, màu hơi đậm hơn hình chút.", reviewDate: "19/03/2024" },
+        { id: 3, user: "Hoàng An", rating: 5, comment: "Chất lượng tuyệt vời trong tầm giá.", reviewDate: "18/03/2024" },
+        { id: 4, user: "Minh Thư", rating: 5, comment: "Shop tư vấn nhiệt tình, sẽ ủng hộ tiếp.", reviewDate: "17/03/2024" },
+        { id: 5, user: "Quốc Bảo", rating: 3, comment: "Size L hơi rộng so với mình.", reviewDate: "16/03/2024" },
+        { id: 6, user: "Lan Chi", rating: 5, comment: "Áo mặc ấm, nỉ bông xịn xò.", dareviewDatete: "15/03/2024" },
+        { id: 7, user: "Tuấn Anh", rating: 4, comment: "Ổn áp, đóng gói kỹ.", reviewDate: "14/03/2024" },
+        { id: 8, user: "Thùy Linh", rating: 5, comment: "Màu trắng rất sang nhé.", reviewDate: "13/03/2024" },
+    ];
 
+    const shopData = {
+        name: "The Artisan Collective",
+        avatar: avt,
+        rating: 4.2,
+        reviews: "1.2k",
+        description: "Unique, ethically sourced handmade goods from global artisans. Since 2018.",
+        products: 158,
+        followers: 8200,
+        sales: "45k"
+    };
+
+    const shopLinkName = encodeURIComponent(shopData.name);
+    const [visibleComments, setVisibleComments] = useState(1);
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Trắng');
 
@@ -47,8 +60,13 @@ export default function Product() {
 
     const [currentImage, setCurrentImage] = useState(productData.mainImage);
 
+    const handleShowMore = () => {
+        setVisibleComments(prev => prev + 5);
+    };
+
     return (
         <div className='product-container'>
+            {/* Sản phẩm */}
             <div className='item-details'>
                 <div className='item-img-group'>
                     <img className='item-main-img' src={currentImage} alt={productData.name} />
@@ -131,37 +149,67 @@ export default function Product() {
                 </div>
             </div>
 
-            <div className='shop-section-container'>
-                <div className='shop-section-profile'>
-                    <img src={shopData.avatar} alt="shop-avatar" className='shop-section-avatar' />
-                    <div className='shop-section-info'>
-                        <h1 className='shop-section-name'>{shopData.name}</h1>
-                        <div className='shop-section-rating-box'>
-                            {renderStars(shopData.rating)}
-                            <span className='shop-section-rating-text'>
-                                {shopData.rating} ({shopData.reviews} Đánh giá)
-                            </span>
-                        </div>
-                        <p className='shop-section-bio'>{shopData.description}</p>
-                    </div>
+            {/* Đánh giá */}
+            <div className='comment-section'>
+                <div className='comment-header'>
+                    <h3>Đánh giá ({productData.rating}⭐)</h3>
+                    {visibleComments < initialComments.length && (
+                        <span className='show-more-text' onClick={handleShowMore}>
+                            Hiển thị thêm
+                        </span>
+                    )}
                 </div>
+                
+                <div className='comment-list'>
+                    {initialComments.slice(0, visibleComments).map(comment => (
+                        <div key={comment.id} className='comment-item'>
+                            <div className='comment-user-info'>
+                                <strong>{comment.user}</strong>
+                                <span className='comment-stars'>{comment.rating}⭐</span>
+                                <small className='comment-date'>{comment.reviewDate}</small>
+                            </div>
+                            <p className='comment-content'>{comment.comment}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-                <div className='shop-section-metrics'>
-                    <div className='shop-section-stats-grid'>
-                        <div className='shop-section-stat-card'>
-                            <strong className='shop-section-stat-value'>{shopData.products}</strong>
-                            <span className='shop-section-stat-label'>Sản phẩm</span>
-                        </div>
-                        <div className='shop-section-stat-card'>
-                            <strong className='shop-section-stat-value'>{shopData.followers}</strong>
-                            <span className='shop-section-stat-label'>Theo dõi</span>
-                        </div>
-                        <div className='shop-section-stat-card'>
-                            <strong className='shop-section-stat-value'>{shopData.sales}</strong>
-                            <span className='shop-section-stat-label'>Lượt bán</span>
+            {/* Shop */}        
+            <div className='shop-section-container'>
+                    <div className='shop-section-profile'>
+                        <Link to={`/shop/${encodeURIComponent(shopData.name)}`} style={{ textDecoration: 'none'}}>
+                            <img src={shopData.avatar} alt="shop-avatar" className='shop-section-avatar' />
+                        </Link>
+                        <div className='shop-section-info'>
+                            <Link to={`/shop/${encodeURIComponent(shopData.name)}`} style={{ textDecoration: 'none'}} >
+                                <h1 className='shop-section-name'>{shopData.name}</h1>
+                            </Link>
+                            <div className='shop-section-rating-box'>
+                                {renderStars(shopData.rating)}
+                                <span className='shop-section-rating-text'>
+                                    {shopData.rating} ({shopData.reviews} Đánh giá)
+                                </span>
+                            </div>
+                            <p className='shop-section-bio'>{shopData.description}</p>
                         </div>
                     </div>
-                </div>
+
+                    <div className='shop-section-metrics'>
+                        <div className='shop-section-stats-grid'>
+                            <div className='shop-section-stat-card'>
+                                <strong className='shop-section-stat-value'>{shopData.products}</strong>
+                                <span className='shop-section-stat-label'>Sản phẩm</span>
+                            </div>
+                            <div className='shop-section-stat-card'>
+                                <strong className='shop-section-stat-value'>{shopData.followers}</strong>
+                                <span className='shop-section-stat-label'>Theo dõi</span>
+                            </div>
+                            <div className='shop-section-stat-card'>
+                                <strong className='shop-section-stat-value'>{shopData.sales}</strong>
+                                <span className='shop-section-stat-label'>Lượt bán</span>
+                            </div>
+                        </div>
+                    </div>
             </div>
 
             <div className='item-similar'>
