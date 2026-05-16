@@ -32,7 +32,7 @@ export default function Product() {
         { id: 3, user: "Hoàng An", rating: 5, comment: "Chất lượng tuyệt vời trong tầm giá.", reviewDate: "18/03/2024" },
         { id: 4, user: "Minh Thư", rating: 5, comment: "Shop tư vấn nhiệt tình, sẽ ủng hộ tiếp.", reviewDate: "17/03/2024" },
         { id: 5, user: "Quốc Bảo", rating: 3, comment: "Size L hơi rộng so với mình.", reviewDate: "16/03/2024" },
-        { id: 6, user: "Lan Chi", rating: 5, comment: "Áo mặc ấm, nỉ bông xịn xò.", dareviewDatete: "15/03/2024" },
+        { id: 6, user: "Lan Chi", rating: 5, comment: "Áo mặc ấm, nỉ bông xịn xò.", reviewDate: "15/03/2024" },
         { id: 7, user: "Tuấn Anh", rating: 4, comment: "Ổn áp, đóng gói kỹ.", reviewDate: "14/03/2024" },
         { id: 8, user: "Thùy Linh", rating: 5, comment: "Màu trắng rất sang nhé.", reviewDate: "13/03/2024" },
     ];
@@ -144,7 +144,6 @@ export default function Product() {
 
                     <div className='add-to-cart'>
                         <button className='add-to-cart-btn'>Thêm vào giỏ hàng</button>
-                        <button className='buy-now'>Mua ngay</button>
                     </div>
                 </div>
             </div>

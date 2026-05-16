@@ -7,6 +7,7 @@ import Cart from './pages/public/Cart'
 import Shop from './pages/public/Shop'
 import Product from './pages/public/Product'
 import Account from './pages/public/Account'
+import ShopHome from './pages/seller/ShopHome'
 
 const MainLayout = () => {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route element={<NoLayout />}>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/seller/:active_tab" element={<ShopHome/>} />
         </Route>
 
         <Route element={<MainLayout />}>
