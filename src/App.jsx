@@ -8,12 +8,14 @@ import Shop from './pages/public/Shop'
 import Product from './pages/public/Product'
 import Account from './pages/public/Account'
 import ShopHome from './pages/seller/ShopHome'
+import {Chatbot} from './pages/public/Chatbot'
 
 const MainLayout = () => {
   return (
     <>
       <Header />
       <Outlet />
+      <Chatbot />
     </>
   )
 }

@@ -38,14 +38,15 @@ export default function ShopProfile() {
     const [editProduct, setEditProduct] = useState({
         description: "",
         size: "",
-        color: ""
+        color: "",
+        quantity: ""
     });
 
     const products = [
         { 
             id: 1, name: "The Java Handbook", price: 29.99, rating: 4, sold: "1.2k", image: productImg,
             description: "Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao. Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao. Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao.",
-            size: ["A5", "A4"], color: ["Trắng đen", "Xanh"], sku: "BK-JAVA-001",
+            size: ["A5", "A4"], color: ["Trắng đen", "Xanh"], quantity: "500", sku: "BK-JAVA-001",
             reviews: [
                 { id: 101, user: "Nguyen Van A", time: "20.04.2026", text: "Sách rất hay và bổ ích!", replies: [] },
                 { id: 102, user: "Nguyen Van A", time: "20.04.2026", text: "Sách rất hay và bổ ích!", replies: [] }
@@ -53,7 +54,7 @@ export default function ShopProfile() {
         },
         { 
             id: 2, name: "Clean Code", price: 35.50, rating: 5, sold: "800", image: productImg, 
-            description: "Mã sạch trong lập trình agile.", size: ["A5"], color: ["Xanh"], sku: "BK-CC-002", reviews: [] 
+            description: "Mã sạch trong lập trình agile.", size: ["A5"], color: ["Xanh"], quantity: "300", sku: "BK-CC-002", reviews: [] 
         },
     ];
 
@@ -380,9 +381,10 @@ export default function ShopProfile() {
                                             setSelectedProduct(item);
 
                                             setEditProduct({
-                                                description: item.description,
+                                                description: item.description || "",
                                                 size: item.size.join(", "),
-                                                color: item.color.join(", ")
+                                                color: item.color.join(", "),
+                                                quantity: item.quantity || ""
                                             });
 
                                             setIsEditingProduct(false);
@@ -547,13 +549,14 @@ export default function ShopProfile() {
                                 <span className="price-detail">${selectedProduct.price}</span>
                                 {isEditingProduct ? (
                                     <>
+                                        <p><strong>Mô tả sản phẩm:</strong></p>
                                         <textarea
                                             className="edit-product-textarea"
                                             value={editProduct.description}
                                             onChange={(e) => setEditProduct({...editProduct, description: e.target.value})
                                             }
                                         />
-
+                                        <p><strong>Size:</strong></p>
                                         <input
                                             type="text"
                                             placeholder="Size cách nhau dấu phẩy"
@@ -561,7 +564,7 @@ export default function ShopProfile() {
                                             onChange={(e) => setEditProduct({...editProduct, size: e.target.value})
                                             }
                                         />
-
+                                        <p><strong>Màu sắc:</strong></p>
                                         <input
                                             type="text"
                                             placeholder="Màu cách nhau dấu phẩy"
@@ -569,14 +572,23 @@ export default function ShopProfile() {
                                             onChange={(e) => setEditProduct({...editProduct, color: e.target.value})
                                             }
                                         />
+                                        <p><strong>Số lượng:</strong></p>
+                                        <input
+                                            type="text"
+                                            placeholder="Số lượng sản phẩm"
+                                            value={editProduct.quantity}
+                                            onChange={(e) => setEditProduct({...editProduct, quantity: e.target.value})
+                                            }
+                                        />
                                     </>
                                 ) : (
                                     <>
-                                        <p className="product-desc">Mô tả sản phẩm: {selectedProduct.description}</p>
+                                        <p className="product-desc"><strong>Mô tả sản phẩm: </strong>{selectedProduct.description}</p>
 
                                         <div className="meta">
-                                            <p> <strong>Size:</strong>{" "} {selectedProduct.size.join(", ")}</p>
+                                            <p><strong>Size:</strong>{" "} {selectedProduct.size.join(", ")}</p>
                                             <p><strong>Màu:</strong>{" "} {selectedProduct.color.join(", ")}</p>
+                                            <p><strong>Số Lượng:</strong>{" "} {selectedProduct.quantity}</p>
                                             <p><strong>SKU:</strong> {selectedProduct.sku}</p>
                                         </div>
                                     </>
@@ -595,10 +607,10 @@ export default function ShopProfile() {
                                                         size: editProduct.size
                                                             .split(",")
                                                             .map(s => s.trim()),
-
                                                         color: editProduct.color
                                                             .split(",")
-                                                            .map(c => c.trim())
+                                                            .map(c => c.trim()),
+                                                        quantity: editProduct.quantity
                                                     };
                                                 }
 
