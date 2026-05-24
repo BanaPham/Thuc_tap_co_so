@@ -31,14 +31,14 @@ export default function App() {
         <Route element={<NoLayout />}>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/seller/:active_tab" element={<ShopHome/>} />
+          <Route path="/seller/:active_tab/:id" element={<ShopHome />} />
         </Route>
 
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/product/:id" element={<Product />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/shop/:name" element={<Shop />} />
+          <Route path="/shop/:id" element={<Shop />} />
           <Route path="/account" element={<Navigate to="/account/profile" replace />} />
           <Route path="/account/:active_tab" element={<Account />} />
         </Route>

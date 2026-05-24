@@ -36,7 +36,9 @@
 }
 
 .profile,
-.invoice {
+.invoice,
+.buyer,
+.logout {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -51,7 +53,9 @@
     transition: all 0.3s ease;
 }
 .profile:hover,
-.invoice:hover {
+.invoice:hover,
+.buyer:hover,
+.logout:hover {
     opacity: 0.8;
 }
 

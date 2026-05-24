@@ -156,3 +156,10 @@ html, body {
     transform: scale(1.05);
     transition: 0.2s;
 }
+
+.home_end {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #777;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/public/Order.css';
 import bia from './assets/muado.jpg'; 
@@ -7,7 +7,7 @@ import bank from './assets/bank-card.png';
 import momo from './assets/momo.png'; 
 
 export default function Order({ onClose, subtotal, shippingFee, selectedItems }) { 
-    const [vouchers] = useState({
+    const [vouchers, setVouchers] = useState({
         shipping: [
             { id: 'ship1', name: "Freeship Xtra - Giảm 15k", value: 15000 },
             { id: 'ship2', name: "Giảm 10k phí vận chuyển", value: 10000 }
@@ -16,21 +16,17 @@ export default function Order({ onClose, subtotal, shippingFee, selectedItems })
             { id: 'p1', name: "ShopZone - Giảm 10k đơn từ 50k", value: 10000 },
             { id: 'p2', name: "ShopZone - Giảm 20k đơn từ 100k", value: 20000 }
         ],
-        shops: {
-            "Shop ABC": [
-                { id: 's1', name: "Shop ABC - Giảm 5k", value: 5000 },
-                { id: 's2', name: "Shop ABC - Giảm 10%", value: 3000 }
-            ]
-        }
+        shops: {}
     });
 
     const cartItems = selectedItems;
 
     const [estimatedDate] = useState("15/03 - 20/03");
 
+    const loggedUser = JSON.parse(localStorage.getItem('user'));
     const [userInfo, setUserInfo] = useState({
-        phone: "0987654321",
-        address: "123 Đường ABC, Hà Nội"
+        phone: loggedUser?.phone || "",
+        address: ""
     });
 
     // Nhập thông tin nhận hàng 
@@ -55,17 +51,112 @@ export default function Order({ onClose, subtotal, shippingFee, selectedItems })
     const shopDiscountTotal = Object.values(selectedShopVouchers).reduce((a, b) => a + b, 0);
     const totalDiscount = selectedShipVoucher + selectedPlatformVoucher + shopDiscountTotal;
     const totalPayment = subtotal + shippingFee - totalDiscount;
-
-    // Xác nhận đặt hàng 
-    const handlePlaceOrder = () => {
+ 
+    // Xác nhận đặt hàng (Đã nối API thật)
+    const handlePlaceOrder = async () => {
         if (!userInfo.phone.trim() || !userInfo.address.trim()) {
             alert("⚠️ Vui lòng nhập đầy đủ Số điện thoại và Địa chỉ trước khi thanh toán!");
             return;
         }
-        alert(`Đặt hàng thành công!`);
-        onClose();
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        const userId = user?.userID || user?.userid || user?.id;
+
+        if (!userId) {
+            alert("Vui lòng đăng nhập lại để đặt hàng!");
+            return;
+        }
+
+        // Lấy danh sách ID giỏ hàng
+        const cartItemIds = cartItems.map(item => item.cartItemId);
+
+        // Đóng gói dữ liệu theo OrderRequestDTO của Backend.
+        // Không fix cứng addressId/shopId nữa:
+        //  - Gửi thẳng SĐT + địa chỉ người dùng nhập -> backend tạo địa chỉ mới
+        //  - shopId để trống -> backend tự suy từ sản phẩm trong giỏ (và tách đơn theo shop)
+        const orderRequest = {
+            userId: userId,
+            cartItemIds: cartItemIds,
+            paymentMethod: paymentMethod.toUpperCase(), // COD, BANK, MOMO
+            receiverName: user?.fullName || user?.email || "Khách hàng",
+            receiverPhone: userInfo.phone,
+            receiverAddress: userInfo.address
+        };
+
+        try {
+            const response = await fetch(`http://localhost:8081/api/orders/place`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem('token')}` // Kẹp thẻ thông hành
+                },
+                body: JSON.stringify(orderRequest)
+            });
+
+            if (response.ok) {
+                onClose(); 
+                window.location.reload(); 
+            } else {
+                const errorData = await response.text();
+                alert("❌ Lỗi khi đặt hàng: " + errorData);
+            }
+        } catch (error) {
+            console.error("Lỗi:", error);
+            alert("Không thể kết nối đến máy chủ thanh toán!");
+        }
     };
 
+    useEffect(() => {
+        const fetchSavedVouchers = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (!user) return;
+
+            const userId = user.userID || user.userid || user.id;
+
+            try {
+                const res = await fetch(
+                    `http://localhost:8081/api/vouchers/user/${userId}`
+                );
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    const shops = {};
+
+                    data.forEach(v => {
+
+                        const voucherData = {
+                            id: v.voucherID,
+                            name: v.voucherName || v.code || "Voucher",
+                            value: v.discountValue || 0
+                        };
+
+                        // Voucher vận chuyển
+                        const shopName =
+                            v.shop?.shopName || "Shop";
+
+                        if (!shops[shopName]) {
+                            shops[shopName] = [];
+                        }
+
+                        shops[shopName].push(voucherData);
+                        
+                    });
+
+                    setVouchers(prev => ({
+                        ...prev,
+                        shops
+                    }));
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchSavedVouchers();
+    }, []);
 
     return (
         <div className="order-overlay">
@@ -82,10 +173,10 @@ export default function Order({ onClose, subtotal, shippingFee, selectedItems })
                         <div className="product-list">
                             {cartItems.map(item => (
                                 <div className="product-item-mini" key={item.id}>
-                                    <img src={item.image} alt={item.name} className="product-img-mini" />
+                                    <img src={item.image || bia} alt={item.title || item.name} className="product-img-mini" />
                                     <div className="product-info-mini">
-                                        <p className="p-name">{item.name}</p>
-                                        <p className="p-qty-price">SL: {item.quantity} x <span className="p-price">{item.price.toLocaleString('vi-VN')}đ</span></p>
+                                        <p className="p-name"><strong>{item.title || item.name}</strong></p>
+                                        <p className="p-qty-price">SL: {item.quantity} x <span className="p-price">{Number(item.price).toLocaleString('vi-VN')}đ</span></p>
                                     </div>
                                 </div>
                             ))}
@@ -196,7 +287,11 @@ export default function Order({ onClose, subtotal, shippingFee, selectedItems })
                                         setSelectedShopVouchers(prev => ({...prev, [shopName]: val}));
                                     }}>
                                         <option value="0">Chọn mã giảm giá shop...</option>
-                                        {vouchers.shops[shopName]?.map(v => <option key={v.id} value={v.value}>{v.name}</option>)}
+                                        {vouchers.shops[shopName]?.map(v => (
+                                            <option key={v.id} value={v.value}>
+                                                {`Giảm ${Number(v.value).toLocaleString('vi-VN')}đ`}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             ))}

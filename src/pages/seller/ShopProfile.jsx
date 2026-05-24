@@ -1,30 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import "../../styles/seller/ShopProfile.css";
 import avt from '../public/assets/avt-shop.jpg';
 import productImg from '../public/assets/muado.jpg';
 
 export default function ShopProfile() {
-    const shopData = {
-        name: "Shop ABC",
-        avatar: avt,
-        rating: 4.2,
-        reviews: "1.2k",
-        description: "Unique, ethically sourced handmade goods from global artisans. Since 2018.",
-        products: 158,
-        followers: 8200,
-        sales: "45k"
-    };
+    const { id } = useParams();
+    const [shopData, setShopData] = useState(null);
+
+    // Hiển thị thông tin Shop
+    useEffect(() => {
+        const fetchShop = async () => {
+            try {const response = await fetch(`http://localhost:8081/api/shops/${id}`);
+                if (!response.ok) {
+                    throw new Error("Load shop failed");
+                }
+
+                const data = await response.json();
+                setShopData(data);
+                setDescription(data.shop?.description || "");
+
+            } catch (err) {
+                console.error("Load shop failed", err);
+            }
+        };
+
+        if (id) {fetchShop();}
+    }, [id]);
 
     // Quản lý Mô tả 
-    const [description, setDescription] = useState(shopData.description);
+    const [description, setDescription] = useState("");
     const [isEditingDesc, setIsEditingDesc] = useState(false);
 
     // Quản lý Voucher 
-    const [vouchers, setVouchers] = useState([
-        { id: 1, discount: "100k", target: "500k", total: 100, remaining: 50, expiry: "30.04.2026" },
-        { id: 2, discount: "50k", target: "200k", total: 50, remaining: 10, expiry: "15.05.2026" },
-    ]);
+    const [vouchers, setVouchers] = useState([]);
+    // Lấy danh sách voucher của Shop
+    useEffect(() => {
+        const fetchVouchers = async () => {
+            try {
+                const response = await fetch(`http://localhost:8081/api/vouchers/shop/${id}`);
+                if (!response.ok) {
+                    throw new Error("Load vouchers failed");
+                }
+                const data = await response.json();
+                
+                const formattedData = data.map(v => ({
+                    id: v.voucherID,
+                    discount: formatMoney(v.discountValue),
+                    target: formatMoney(v.minOrderValue),
+                    total: v.quantity ?? 0,
+                    remaining: v.remainingQuantity ?? 0,
+                    expiry: formatDate(v.endDate)
+                }));
+                
+                setVouchers(formattedData);
+            } catch (err) {
+                console.error("Load vouchers failed", err);
+            }
+        };
+
+        if (id) {
+            fetchVouchers();
+        }
+    }, [id]);
+
     const [showAddVoucher, setShowAddVoucher] = useState(false);
     const [newVoucher, setNewVoucher] = useState({ discount: '', target: '', total: '', expiry: '' });
     const [error, setError] = useState("");
@@ -37,40 +76,191 @@ export default function ShopProfile() {
 
     const [editProduct, setEditProduct] = useState({
         description: "",
-        size: "",
-        color: "",
-        quantity: ""
+        variants: []
     });
 
-    const products = [
-        { 
-            id: 1, name: "The Java Handbook", price: 29.99, rating: 4, sold: "1.2k", image: productImg,
-            description: "Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao. Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao. Cuốn sách hướng dẫn lập trình Java căn bản đến nâng cao.",
-            size: ["A5", "A4"], color: ["Trắng đen", "Xanh"], quantity: "500", sku: "BK-JAVA-001",
-            reviews: [
-                { id: 101, user: "Nguyen Van A", time: "20.04.2026", text: "Sách rất hay và bổ ích!", replies: [] },
-                { id: 102, user: "Nguyen Van A", time: "20.04.2026", text: "Sách rất hay và bổ ích!", replies: [] }
-            ]
-        },
-        { 
-            id: 2, name: "Clean Code", price: 35.50, rating: 5, sold: "800", image: productImg, 
-            description: "Mã sạch trong lập trình agile.", size: ["A5"], color: ["Xanh"], quantity: "300", sku: "BK-CC-002", reviews: [] 
-        },
-    ];
+    // Hiển thị sản phẩm 
+    const [productList, setProductList] = useState([]);
+
+    const fetchProductsByShop = async () => {
+        try {
+            const response = await fetch(`http://localhost:8081/api/products/shop/${id}/all`);
+            if (!response.ok) throw new Error("Load products failed");
+            const data = await response.json();
+
+            const formattedProducts = data.map(p => {
+                return {
+                    id: p.productID,
+                    name: p.productName,
+                    brand: p.brand || "",
+                    description: p.description || "",
+                    image:
+                        p.imageURL ||
+                        p.images?.find(img => img.isMain)?.imageURL ||
+                        p.images?.[0]?.imageURL ||
+                        productImg,
+                    price:
+                        p.price ||
+                        p.variants?.[0]?.price ||
+                        0,
+                    size: [
+                        ...new Set(
+                            p.variants?.map(v => v.size).filter(Boolean) || []
+                        )
+                    ],
+                    color: [
+                        ...new Set(
+                            p.variants?.map(v => v.color).filter(Boolean) || []
+                        )
+                    ],
+                    sku:
+                        p.variants?.[0]?.sku || "",
+                    quantity:
+                        p.stockQuantity ||
+                        p.variants?.reduce(
+                            (sum, v) => sum + (v.stockQuantity || 0),
+                            0
+                        ) || 0,
+                    rating: p.rating || 0,
+                    sold: p.sold || 0,
+                    reviews: p.reviews || []
+                };
+            });
+
+            setProductList(formattedProducts);
+        } catch (err) {
+            console.error("Lỗi khi lấy danh sách sản phẩm:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (id) {
+            fetchProductsByShop();
+        }
+    }, [id]);
+
+    // Xem chi tiết sản phẩm
+    const fetchProductDetail = async (productId) => {
+        try {
+
+            const response = await fetch(
+                `http://localhost:8081/api/products/${productId}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Không thể xem chi tiết sản phẩm");
+            }
+
+            const data = await response.json();
+
+            const product = data.product || {};
+            const variants = data.variants || [];
+            const reviews = data.reviews || [];
+
+            const formattedProduct = {
+                id: product.productID,
+                name: product.productName,
+                description: product.description || "Chưa có mô tả",
+                image:
+                    product.imageURL ||
+                    product.images?.find(img => img.isMain)?.imageURL ||
+                    product.images?.[0]?.imageURL ||
+                    productImg,
+                price:
+                    variants[0]?.price || 0,
+                size: [
+                    ...new Set(
+                        variants
+                            .map(v => v.size)
+                            .filter(Boolean)
+                    )
+                ],
+                color: [
+                    ...new Set(
+                        variants
+                            .map(v => v.color)
+                            .filter(Boolean)
+                    )
+                ],
+                quantity:
+                    variants.reduce(
+                        (sum, v) => sum + (v.stockQuantity || 0),
+                        0
+                    ),
+                sku:
+                    variants[0]?.sku || "Chưa có SKU",
+                rating: product.rating || 0,
+                sold: product.sold || 0,
+                reviews: reviews.map(r => ({
+                    id: r.reviewID,
+                    user: r.user?.fullName || "Người dùng",
+                    text: r.comment,
+                    rating: r.rating,
+                    reply: r.shopReply || "",
+                    time: r.createdAt || ""
+                }))
+            };
+
+            setSelectedProduct(formattedProduct);
+
+            setEditProduct({
+                productName: product.productName,
+                description: product.description || "",
+                brand: product.brand || "Mặc định",
+                variants: variants.map(v => ({
+                    variantID: v.variantID || v.productVariantID,
+                    size: v.size || "",
+                    color: v.color || "",
+                    price: v.price || 0,
+                    stockQuantity: v.stockQuantity || 0,
+                    sku: v.sku || ""
+                }))
+            });
+
+        } catch (err) {
+            console.error("Load product detail failed:", err);
+        }
+    };
 
     // Thêm sản phẩm mới
-    const [productList, setProductList] = useState(products);
     const [showAddProduct, setShowAddProduct] = useState(false);
-
-    const [newProduct, setNewProduct] = useState({
-        name: "",
-        price: "",
-        description: "",
-        size: "",
-        color: "",
+    const emptyProduct = {
+        productName: "", 
+        description: "", 
+        brand: "Mặc định",
+        categoryId: "1", 
+        quantity: "",
         sku: "",
-        images: []
-    });
+        variants: [{ size: "", color: "", price: "", stockQuantity: "", sku: "", status: "active" }],
+        images: [{ imageURL: "", isMain: true }]
+    };
+
+    const [newProduct, setNewProduct] = useState(emptyProduct);
+    //
+    // Quản lý biến thể
+    const addVariant = () => setNewProduct(f => ({
+        ...f, variants: [...f.variants, { size: "", color: "", price: "", stockQuantity: "", sku: "", status: "active" }]
+    }));
+    const removeVariant = (idx) => setNewProduct(f => ({
+        ...f, variants: f.variants.filter((_, i) => i !== idx)
+    }));
+    const updateVariant = (idx, field, val) => setNewProduct(f => ({
+        ...f, variants: f.variants.map((v, i) => i === idx ? { ...v, [field]: val } : v)
+    }));
+
+    // Quản lý ảnh sản phẩm (Nhập URL trực tiếp)
+    const addImage = () => setNewProduct(f => ({
+        ...f, images: [...f.images, { imageURL: "", isMain: false }]
+    }));
+    const removeImage = (idx) => setNewProduct(f => ({
+        ...f, images: f.images.filter((_, i) => i !== idx)
+    }));
+    const updateImage = (idx, field, val) => setNewProduct(f => ({
+        ...f, images: f.images.map((img, i) => i === idx ? { ...img, [field]: val } : img)
+    }));
+    const setMainImage = (idx) => setNewProduct(f => ({
+        ...f, images: f.images.map((img, i) => ({ ...img, isMain: i === idx }))
+    }));
     //
     const formatNumber = (num) => {
         return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num;
@@ -80,14 +270,115 @@ export default function ShopProfile() {
         const positiveStars = Math.round(score); 
         return "⭐".repeat(positiveStars) + "☆".repeat(5 - positiveStars);
     };
+    
+    const handleAddProduct = async () => {
+        if (!newProduct.productName.trim()) { alert("Vui lòng nhập tên sản phẩm!"); return; }
+        if (newProduct.variants.some(v => !v.price)) { alert("Vui lòng nhập giá cho tất cả biến thể!"); return; }
+        if (newProduct.images.some(img => !img.imageURL.trim())) { alert("Vui lòng nhập URL ảnh!"); return; }
+
+        const token = localStorage.getItem("token");
+        
+        const bodyPayload = {
+            productName: newProduct.productName,
+            description: newProduct.description,
+            brand: newProduct.brand || "Mặc định",
+            categoryId: newProduct.categoryId ? Number(newProduct.categoryId) : 1,
+            shopId: Number(id),
+            sku: newProduct.sku,
+            quantity: parseInt(newProduct.quantity) || 0,
+            variants: newProduct.variants.map(v => ({
+                size: v.size, 
+                color: v.color,
+                price: parseFloat(v.price) || 0,
+                stockQuantity: parseInt(v.stockQuantity) || 0,
+                sku: v.sku || null,
+                status: v.status || "active"
+            })),
+            images: newProduct.images.map(img => ({
+                imageURL: img.imageURL,
+                isMain: img.isMain
+            }))
+        };
+
+        try {
+            const response = await fetch("http://localhost:8081/api/products/seller", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(bodyPayload)
+            });
+
+            if (response.ok) {
+                alert("Thêm sản phẩm mới thành công!");
+                await fetchProductsByShop(); 
+                setShowAddProduct(false);    
+                setNewProduct(emptyProduct);  
+            } else {
+                const data = await response.json();
+                alert(`❌ Lỗi: ${data.error || "Không thể lưu sản phẩm!"}`);
+            }
+        } catch (err) {
+            console.error("Lỗi kết nối:", err);
+            alert("Có lỗi xảy ra khi kết nối server!");
+        }
+    };
+
+    // Chỉnh sửa sản phẩm
+    const handleUpdateProduct = async () => {
+        if (editProduct.variants.some(v => v.stockQuantity < 0 || v.stockQuantity === "")) { 
+            alert("Số lượng kho không hợp lệ!"); 
+            return; 
+        }
+
+        const token = localStorage.getItem("token");
+        const bodyPayload = {
+            productName: editProduct.productName,
+            description: editProduct.description,
+            brand: editProduct.brand,
+            variants: editProduct.variants.map(v => ({
+                variantID: v.variantID,
+                size: v.size,
+                color: v.color,
+                price: parseFloat(v.price),
+                stockQuantity: parseInt(v.stockQuantity) || 0, 
+                sku: v.sku || null,
+                status: "active"
+            }))
+        };
+
+        try {
+            const response = await fetch(`http://localhost:8081/api/products/seller/${selectedProduct.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(bodyPayload)
+            });
+
+            if (response.ok) {
+                alert("Cập nhật số lượng kho thành công!");
+                setIsEditingProduct(false);
+                await fetchProductsByShop(); 
+                await fetchProductDetail(selectedProduct.id);
+            } else {
+                const data = await response.json();
+                alert(`❌ Lỗi: ${data.error || "Không thể cập nhật số lượng!"}`);
+            }
+        } catch (err) {
+            console.error("Lỗi cập nhật sản phẩm:", err);
+            alert("Có lỗi xảy ra khi kết nối server!");
+        }
+    };
 
     /* Thêm voucher */
     const formatMoney = (value) => {
         const num = Number(value);
-        if (num >= 1000) {
-            return (num / 1000) + "k";
-        }
-        return num;
+        if (isNaN(num)) return value;
+        
+        return num.toLocaleString('vi-VN') + " ₫"; 
     };
     //
     const formatDate = (dateStr) => {
@@ -97,34 +388,82 @@ export default function ShopProfile() {
         const year = date.getFullYear();
         return `${day}.${month}.${year}`;
     };
-    //
-    const handleAddVoucher = () => {
+
+    // Thêm Voucher
+    const handleAddVoucher = async () => {
         if (!newVoucher.discount || !newVoucher.target || !newVoucher.total || !newVoucher.expiry) {
             setError("Vui lòng điền đầy đủ thông tin!");
             return;
         }
 
-        if (Number(newVoucher.discount) <= 0 || Number(newVoucher.target) <= 0 || Number(newVoucher.total) <= 0) {
+        if (Number(newVoucher.discount) <= 0 ||  Number(newVoucher.target) < 0 || Number(newVoucher.total) <= 0) {
             setError("Giá trị phải lớn hơn 0!");
             return;
         }
 
         setError("");
-        const id = vouchers.length + 1;
 
-        const formattedVoucher = {
-            id,
-            discount: formatMoney(newVoucher.discount),
-            target: formatMoney(newVoucher.target),
-            total: Number(newVoucher.total),
-            remaining: Number(newVoucher.total),
-            expiry: formatDate(newVoucher.expiry)
-        };
+        try {
+            const now = new Date();
+            const pad = (num) => String(num).padStart(2, '0');
+            const formattedStartDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            const formattedEndDate = `${newVoucher.expiry}T23:59:59`;
+            const randomCode = "VC" + String(Math.floor(1000 + Math.random() * 9000));
 
-        setVouchers([...vouchers, formattedVoucher]);
+            const bodyPayload = {
+                voucherType: "Shop",
+                discountValue: Number(newVoucher.discount),
+                minOrderValue: Number(newVoucher.target),
+                quantity: Number(newVoucher.total),
+                startDate: formattedStartDate,
+                endDate: formattedEndDate,
+                status: "Active", 
+                voucherCode: randomCode, 
+                shop: {
+                    shopID: Number(id) 
+                }
+            };
 
-        setShowAddVoucher(false);
-        setNewVoucher({ discount: '', target: '', total: '', expiry: '' });
+            console.log("Voucher payload chuẩn gửi đi:", bodyPayload);
+            const token = localStorage.getItem("token");
+
+            const response = await fetch(
+                "http://localhost:8081/api/vouchers",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bodyPayload)
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Lỗi từ Backend trả về:", errorText);
+                throw new Error(errorText || "Thêm voucher thất bại!");
+            }
+
+            const createdVoucher = await response.json();
+            const formattedNewVoucher = {
+                id: createdVoucher.voucherID,
+                discount: formatMoney(createdVoucher.discountValue),
+                target: formatMoney(createdVoucher.minOrderValue),
+                total: createdVoucher.quantity ?? Number(newVoucher.total),
+                remaining: createdVoucher.remainingQuantity ?? createdVoucher.quantity ?? Number(newVoucher.total),
+                expiry: formatDate(createdVoucher.endDate)
+            };
+
+            setVouchers(prev => [formattedNewVoucher, ...prev]);
+            setShowAddVoucher(false);
+            setNewVoucher({ discount: "", target: "", total: "", expiry: "" });
+            setError("");
+
+        } catch (err) {
+            console.error("Lỗi chi tiết khi gửi API:", err);
+            setError(err.message || "Có lỗi xảy ra khi kết nối server!");
+        }
     };
     //
     const handleImageUpload = (e) => {
@@ -137,86 +476,77 @@ export default function ShopProfile() {
             images: [...newProduct.images, ...imageUrls]
         });
     };
-    //
-    const handleAddProduct = () => {
-        if (
-            !newProduct.name ||
-            !newProduct.price ||
-            !newProduct.description ||
-            newProduct.images.length === 0
-        ) {
-            alert("Vui lòng nhập đầy đủ thông tin!");
-            return;
-        }
-
-        const addedProduct = {
-            id: productList.length + 1,
-            name: newProduct.name,
-            price: Number(newProduct.price),
-            description: newProduct.description,
-            size: newProduct.size.split(",").map(s => s.trim()).filter(Boolean),
-            color: newProduct.color.split(",").map(c => c.trim()).filter(Boolean),
-            sku: newProduct.sku,
-            image: newProduct.images[0],
-            images: newProduct.images,
-            rating: 0,
-            sold: "0",
-            reviews: []
-        };
-
-        setProductList([addedProduct, ...productList]);
-
-        setShowAddProduct(false);
-
-        setNewProduct({
-            name: "",
-            price: "",
-            description: "",
-            size: "",
-            color: "",
-            sku: "",
-            images: []
-        });
-    };
-    //
-    const handleReply = (reviewId) => {
+    
+    // Trả lời review 
+    const handleReply = async (reviewId) => {
         if (!replyText.trim()) return;
 
-        const updatedProducts = productList.map(p => {
+        const token = localStorage.getItem("token");
 
-            if (p.id === selectedProduct.id) {
+        try {
+            const response = await fetch(`http://localhost:8081/api/reviews/${reviewId}/reply`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    shopReply: replyText 
+                })
+            });
 
-                return {
-                    ...p,
+            if (response.ok) {
+                const updatedReview = await response.json(); 
+                alert("Trả lời đánh giá thành công!");
 
-                    reviews: p.reviews.map(r => {
+                setSelectedProduct(prevProduct => {
+                    if (!prevProduct) return null;
+                    return {
+                        ...prevProduct,
+                        reviews: prevProduct.reviews.map(rev => {
+                            if (rev.id === reviewId) {
+                                return {
+                                    ...rev,
+                                    reply: updatedReview.shopReply 
+                                };
+                            }
+                            return rev;
+                        })
+                    };
+                });
 
-                        if (r.id === reviewId) {
-
+                setProductList(prevList => 
+                    prevList.map(p => {
+                        if (p.id === selectedProduct.id) {
                             return {
-                                ...r,
-                                reply: replyText
+                                ...p,
+                                reviews: (p.reviews || []).map(r => {
+                                    const currentReviewId = r.reviewID || r.id;
+                                    if (currentReviewId === reviewId) {
+                                        return { 
+                                            ...r, 
+                                            shopReply: updatedReview.shopReply,
+                                            reply: updatedReview.shopReply 
+                                        };
+                                    }
+                                    return r;
+                                })
                             };
                         }
-
-                        return r;
+                        return p;
                     })
-                };
+                );
+                setReplyText("");
+                setReplyingTo(null);
+
+            } else {
+                const errorText = await response.text();
+                alert(`❌ Lỗi từ server: ${errorText || "Không thể gửi phản hồi!"}`);
             }
-
-            return p;
-        });
-
-        setProductList(updatedProducts);
-
-        const updatedSelected = updatedProducts.find(
-            p => p.id === selectedProduct.id
-        );
-
-        setSelectedProduct(updatedSelected);
-
-        setReplyText("");
-        setReplyingTo(null);
+        } catch (err) {
+            console.error("Lỗi kết nối API trả lời comment:", err);
+            alert("Có lỗi xảy ra khi kết nối tới server! Vui lòng kiểm tra lại mạng hoặc log Backend.");
+        }
     };
 
     return (
@@ -225,12 +555,11 @@ export default function ShopProfile() {
             <div className='shop-header profile-mode'>
                 <div className='shop-info'>
                     <div className='info-left'>
-                        <img src={shopData.avatar} alt="avatar" className='shop-avatar' />
+                        <img src={avt} alt="avatar" className='shop-avatar' />
                         <div className='shop-details'>
-                            <h1>{shopData.name}</h1>
+                            <h1>{shopData?.shop?.shopName}</h1>
                             <div className='rating'>
-                                {renderStars(shopData.rating)}
-                                <span className='rating-score'>{shopData.rating} ({shopData.reviews} Đánh giá)</span>
+                                {renderStars(shopData?.shop?.rating || 0)}
                             </div>
                             {isEditingDesc ? (
                                 <div className="edit-desc-area">
@@ -255,15 +584,15 @@ export default function ShopProfile() {
                     <div className='info-right'>
                         <div className='stats'>
                             <div className='stat-item'>
-                                <strong>{shopData.products}</strong>
+                                <strong>{shopData?.productCount || 0}</strong>
                                 <span>Sản phẩm</span>
                             </div>
                             <div className='stat-item'>
-                                <strong>{formatNumber(shopData.followers)}</strong>
+                                <strong>{formatNumber(shopData?.shop?.user?.followerCount || 0)}</strong>
                                 <span>Theo dõi</span>
                             </div>
                             <div className='stat-item'>
-                                <strong>{shopData.sales}</strong>
+                                <strong>{formatNumber(shopData?.salesCount) || 0}</strong>
                                 <span>Lượt bán</span>
                             </div>
                         </div>
@@ -370,24 +699,15 @@ export default function ShopProfile() {
                                 <div className="shop-product-name">{item.name}</div>
                                 <div className="rating">
                                     {renderStars(item.rating)} 
-                                    <span className="product_sold">Đã bán {item.sold}</span>
+                                    <span className="product_sold">Đã bán {item.sold || 0}</span>
                                 </div>
                                 <div className="shop-product-bottom">
-                                    <span className="shop-product-price">${item.price}</span>
+                                    <span className="shop-product-price">{Number(item.price).toLocaleString("vi-VN")} ₫</span>
                                     <button
                                         className="btn-view-detail"
                                         onClick={() => {
                                             setIsEditingProduct(false);
-                                            setSelectedProduct(item);
-
-                                            setEditProduct({
-                                                description: item.description || "",
-                                                size: item.size.join(", "),
-                                                color: item.color.join(", "),
-                                                quantity: item.quantity || ""
-                                            });
-
-                                            setIsEditingProduct(false);
+                                            fetchProductDetail(item.id);
                                         }}
                                     >
                                         Xem chi tiết
@@ -402,104 +722,50 @@ export default function ShopProfile() {
 
             {/* Thêm sản phẩm */}
             {showAddProduct && (
-                <div 
-                    className="modal-overlay"
-                    onClick={() => setShowAddProduct(false)}
-                >
-                    <div 
-                        className="product-form"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                <div className="modal-overlay" onClick={() => setShowAddProduct(false)}>
+                    <div className="product-form" onClick={(e) => e.stopPropagation()}>
                         <h3>Thêm sản phẩm mới</h3>
 
-                        <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={handleImageUpload}
+                        {newProduct.images.map((img, idx) => (
+                            <div key={idx} className="image-row-item">
+                                <input placeholder="URL ảnh" value={img.imageURL} onChange={e => updateImage(idx, "imageURL", e.target.value)} />
+                                <label>
+                                    <span> <input type="radio" name="mainImage" checked={img.isMain} onChange={() => setMainImage(idx)} /> Ảnh chính </span>
+                                </label>
+                                {newProduct.images.length > 1 && <button onClick={() => removeImage(idx)}>✕</button>}
+                            </div>
+                        ))}
+                        <button className='add-image-item'onClick={addImage}>+ Thêm link ảnh</button>
+
+                        <input 
+                            type="text" placeholder="Tên sản phẩm" value={newProduct.productName} 
+                            onChange={e => setNewProduct({...newProduct, productName: e.target.value})} 
                         />
 
-                        <div className="preview-images">
-                            {newProduct.images.map((img, index) => (
-                                <img 
-                                    key={index}
-                                    src={img}
-                                    alt=""
-                                    className={index === 0 ? "main-preview" : ""}
-                                />
-                            ))}
-                        </div>
-
-                        <input
-                            type="text"
-                            placeholder="Tên sản phẩm"
-                            value={newProduct.name}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    name: e.target.value
-                                })
-                            }
+                        <input 
+                            type="text" placeholder="Thương hiệu" value={newProduct.brand} 
+                            onChange={e => setNewProduct({...newProduct, brand: e.target.value})} 
                         />
-
-                        <input
-                            type="text"
-                            placeholder="Giá sản phẩm"
-                            value={newProduct.price}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    price: e.target.value
-                                })
-                            }
-                        />
-
                         <textarea
-                            placeholder="Mô tả sản phẩm"
-                            value={newProduct.description}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    description: e.target.value
-                                })
-                            }
+                            placeholder="Mô tả sản phẩm" value={newProduct.description}
+                            onChange={e => setNewProduct({...newProduct, description: e.target.value})}
                         />
 
-                        <input
-                            type="text"
-                            placeholder="Kích thước"
-                            value={newProduct.size}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    size: e.target.value
-                                })
-                            }
-                        />
-
-                        <input
-                            type="text"
-                            placeholder="Màu sắc"
-                            value={newProduct.color}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    color: e.target.value
-                                })
-                            }
-                        />
-
-                        <input
-                            type="text"
-                            placeholder="SKU"
-                            value={newProduct.sku}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    sku: e.target.value
-                                })
-                            }
-                        />
+                        {newProduct.variants.map((v, idx) => (
+                            <div key={idx} className="variant-item">
+                                <div className="variant-row">
+                                    <input placeholder="Size" value={v.size} onChange={e => updateVariant(idx, "size", e.target.value)} /> 
+                                    <input placeholder="Màu" value={v.color} onChange={e => updateVariant(idx, "color", e.target.value)} /> 
+                                    <input type="number" placeholder="Số lượng" value={v.stockQuantity} onChange={e => updateVariant(idx, "stockQuantity", e.target.value)} />
+                                </div>
+                                <div className="variant-row">
+                                    <input type="number" placeholder="Giá" value={v.price} onChange={e => updateVariant(idx, "price", e.target.value)} /> 
+                                    <input type="text" placeholder="SKU" value={v.sku || ""} onChange={e => updateVariant(idx, "sku", e.target.value)}/>
+                                </div>
+                                {newProduct.variants.length > 1 && <button onClick={() => removeVariant(idx)}>✕</button>}
+                            </div>
+                        ))}
+                        <button className='add-variant-item' type="button" onClick={addVariant}>+ Thêm biến thể</button>
 
                         <div className="form-btns">
                             <button onClick={() => setShowAddProduct(false)}>
@@ -545,41 +811,38 @@ export default function ShopProfile() {
 
                             <div className="info">
                                 <h2>{selectedProduct.name}</h2>
-                                <span>{renderStars(selectedProduct.rating)} | Đã bán: {selectedProduct.sold}</span>
-                                <span className="price-detail">${selectedProduct.price}</span>
+                                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                    <span className='rating'>{renderStars(selectedProduct.rating)} </span> 
+                                    <span>| Đã bán: {selectedProduct.sold}</span>
+                                </div>
+                                <span className="price-detail">
+                                    {Number(selectedProduct.price).toLocaleString("vi-VN")} ₫
+                                </span>
                                 {isEditingProduct ? (
                                     <>
-                                        <p><strong>Mô tả sản phẩm:</strong></p>
-                                        <textarea
-                                            className="edit-product-textarea"
-                                            value={editProduct.description}
-                                            onChange={(e) => setEditProduct({...editProduct, description: e.target.value})
-                                            }
-                                        />
-                                        <p><strong>Size:</strong></p>
-                                        <input
-                                            type="text"
-                                            placeholder="Size cách nhau dấu phẩy"
-                                            value={editProduct.size}
-                                            onChange={(e) => setEditProduct({...editProduct, size: e.target.value})
-                                            }
-                                        />
-                                        <p><strong>Màu sắc:</strong></p>
-                                        <input
-                                            type="text"
-                                            placeholder="Màu cách nhau dấu phẩy"
-                                            value={editProduct.color}
-                                            onChange={(e) => setEditProduct({...editProduct, color: e.target.value})
-                                            }
-                                        />
-                                        <p><strong>Số lượng:</strong></p>
-                                        <input
-                                            type="text"
-                                            placeholder="Số lượng sản phẩm"
-                                            value={editProduct.quantity}
-                                            onChange={(e) => setEditProduct({...editProduct, quantity: e.target.value})
-                                            }
-                                        />
+                                        <p className="product-desc"><strong>Mô tả sản phẩm: </strong>{selectedProduct.description}</p>
+                                        {editProduct.variants.map((v, idx) => (
+                                            <div key={v.variantID || idx} className="variant-edit-box" style={{background: '#f9f9f9', padding: '10px', borderRadius: '5px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                                                <div style={{fontSize: '13px', color: '#333'}}>
+                                                    <strong>Phân loại {idx + 1}:</strong> {v.color || "Mặc định"} - {v.size || "Mặc định"} 
+                                                    <span style={{color: '#888', marginLeft: '10px'}}>({Number(v.price).toLocaleString("vi-VN")} ₫)</span>
+                                                </div>
+                                                <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                                                    <span style={{fontSize: '12px', color: '#555'}}>Số lượng:</span>
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder="Nhập số kho" 
+                                                        value={v.stockQuantity} 
+                                                        style={{width: '90px', padding: '4px 8px', textAlign: 'center', border: '1px solid #ccc', borderRadius: '4px'}}
+                                                        onChange={e => {
+                                                            const newVariants = [...editProduct.variants];
+                                                            newVariants[idx].stockQuantity = e.target.value;
+                                                            setEditProduct({...editProduct, variants: newVariants});
+                                                        }} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </>
                                 ) : (
                                     <>
@@ -598,35 +861,10 @@ export default function ShopProfile() {
                                     className="btn-edit-product"
                                     onClick={() => {
                                         if (isEditingProduct) {
-
-                                            const updatedProducts = productList.map(p => {
-                                                if (p.id === selectedProduct.id) {
-                                                    return {
-                                                        ...p,
-                                                        description: editProduct.description,
-                                                        size: editProduct.size
-                                                            .split(",")
-                                                            .map(s => s.trim()),
-                                                        color: editProduct.color
-                                                            .split(",")
-                                                            .map(c => c.trim()),
-                                                        quantity: editProduct.quantity
-                                                    };
-                                                }
-
-                                                return p;
-                                            });
-
-                                            setProductList(updatedProducts);
-
-                                            const updatedSelected = updatedProducts.find(
-                                                p => p.id === selectedProduct.id
-                                            );
-
-                                            setSelectedProduct(updatedSelected);
+                                            handleUpdateProduct(); 
+                                        } else {
+                                            setIsEditingProduct(true); 
                                         }
-
-                                        setIsEditingProduct(!isEditingProduct);
                                     }}
                                 >
                                     {isEditingProduct ? "Lưu" : "Chỉnh sửa"}
@@ -644,7 +882,7 @@ export default function ShopProfile() {
 
                                         <div className='comment-user-info'>
                                             <strong>{comment.user}</strong>
-                                            <span className='comment-stars'>⭐</span>
+                                            <span className='comment-stars'>{renderStars(comment.rating)}</span>
                                             <small className='comment-date'>{comment.time}</small>
                                         </div>
 
@@ -680,7 +918,7 @@ export default function ShopProfile() {
 
                                         {comment.reply && (
                                             <div className="shop-reply">
-                                                <strong>{shopData.name}</strong>
+                                                <strong>{shopData?.shop?.shopName}</strong>
                                                 <p>{comment.reply}</p>
                                             </div>
                                         )}

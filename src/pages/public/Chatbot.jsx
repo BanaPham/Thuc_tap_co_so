@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { GoogleGenAI } from "@google/genai";
 import '../../styles/public/Chatbot.css';
 
 export function Chatbot() {
@@ -15,6 +14,7 @@ export function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Hàm xử lý gửi tin nhắn thông qua Backend Spring Boot
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -24,24 +24,31 @@ export function Chatbot() {
     setIsLoading(true);
 
     try {
-      const apiKey = "AIzaSyAVTR68njpikfDMzUHxaXT-H-Sz2UtbJb4"; 
-      const ai = new GoogleGenAI({ apiKey: apiKey });
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: userMessage.text,
-        config: {
-          systemInstruction: "Bạn là một trợ lý ảo thông minh của sàn thương mại điện tử ShopZone.vn. Hãy trả lời bằng tiếng Việt, ngắn gọn, lịch sự.",
-          temperature: 0.3,
-        }
+      // Gọi tới API endpoint của Spring Boot Backend thay vì Google trực tiếp
+      const response = await fetch("http://localhost:8081/api/chatbot/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Gửi dữ liệu đúng cấu trúc trường "message" mà ChatRequest của BE cần nhận
+        body: JSON.stringify({ message: userMessage.text }),
       });
 
-      const aiReply = response.text;
+      if (!response.ok) {
+        throw new Error("Lỗi phản hồi từ hệ thống Backend");
+      }
+
+      const data = await response.json();
+
+      // Nhận thuộc tính phản hồi từ đối tượng ChatResponse của BE
+      // (Giả định trường chứa câu trả lời của bạn trong ChatResponse là data.reply hoặc data.message)
+      const aiReply = data.reply || data.message || "Hệ thống không phản hồi nội dung.";
+      
       setMessages((prev) => [...prev, { sender: "bot", text: aiReply }]);
 
     } catch (error) {
-      console.error("Lỗi gọi Gemini API trực tiếp từ FE:", error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "Không thể kết nối trực tiếp đến Gemini. Kiểm tra lại API Key hoặc mạng nhé!" }]);
+      console.error("Lỗi khi kết nối qua Backend:", error);
+      setMessages((prev) => [...prev, { sender: "bot", text: "Không thể kết nối đến hệ thống server. Vui lòng thử lại sau!" }]);
     } finally {
       setIsLoading(false);
     }

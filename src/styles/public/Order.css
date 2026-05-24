@@ -96,8 +96,16 @@
 
 .product-img-mini {
     width: 50px;
+    height: 80px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.p-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .summary-row {

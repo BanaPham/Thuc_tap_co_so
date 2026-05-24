@@ -261,7 +261,6 @@
 .add-product-btn {
     width: 180px; 
     height: 180px;
-    margin-top: 85px;
     border: 2px dashed #ee4d2d;
     display: flex;
     justify-content: center;
@@ -307,6 +306,29 @@
 .product-form textarea {
     min-height: 120px;
     resize: none;
+}
+
+.variant-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.variant-row {
+    display: flex;
+    gap: 12px;
+}
+
+.add-image-item, .add-variant-item {
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.variant-item input {
+    flex: 1;
+    min-width: 120px;
 }
 
 .preview-images {

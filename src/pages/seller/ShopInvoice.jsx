@@ -1,90 +1,75 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import "../../styles/seller/ShopInvoice.css";
 import productImg from '../public/assets/muado.jpg';
 
 export default function ShopInvoice() {
-  // Data demo 
-  const [invoices] = useState([
-    {
-      id: 1,
-      invoiceCode: "HD001",
-      customerName: "Nguyễn Đăng A",
-      customerPhone: "0912345678",
-      bookName: "Princess",
-      price: "200,000",
-      image: productImg,
-      orderDate: "07/11/2025",
-      receiveDate: "20/11/2025",
-    },
-    {
-      id: 2,
-      invoiceCode: "HD002",
-      customerName: "Nguyễn Đăng B",
-      customerPhone: "0912345678",
-      bookName: "Lược sử loài người",
-      price: "95,000",
-      image: productImg,
-      orderDate: "07/11/2025",
-      receiveDate: "20/11/2025",
-    },
-    {
-      id: 3,
-      invoiceCode: "HD003",
-      customerName: "Nguyễn Đăng C",
-      customerPhone: "0912345678",
-      bookName: "Chí Phèo",
-      price: "50,000",
-      image: productImg,
-      orderDate: "07/11/2025",
-      receiveDate: "20/11/2025",
-    },
-    {
-      id: 4,
-      invoiceCode: "HD004",
-      customerName: "Nguyễn Đăng D",
-      customerPhone: "0912345678",
-      bookName: "Chí Phèo",
-      price: "50,000",
-      image: productImg,
-      orderDate: "07/11/2025",
-      receiveDate: "20/11/2025",
-    },
-    {
-      id: 5,
-      invoiceCode: "HD005",
-      customerName: "Nguyễn Đăng E",
-      customerPhone: "0912345678",
-      bookName: "Chí Phèo",
-      price: "50,000",
-      image: productImg,
-      orderDate: "07/11/2025",
-      receiveDate: "20/11/2025",
-    },
-  ]);
+  const { id } = useParams();
 
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  const openModal = (invoice) => {
-    setSelectedInvoice(invoice);
-  };
+  // Hiển thị hóa đơn của Shop
+  useEffect(() => {
+    if (!id) return;
+    const token = localStorage.getItem("token");
+    setLoading(true);
+    fetch(`http://localhost:8081/api/orders/shop/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Không thể tải dữ liệu hóa đơn của shop");
+        return res.json();
+      })
+      .then((data) => {
+        const formattedOrders = data.map((dto) => {
+          const order = dto.order || {};
+          const items = dto.items || [];
 
-  const closeModal = () => {
-    setSelectedInvoice(null);
-  };
+          const productNames = items
+            .map(item => item.productVariant?.product?.productName || "Sản phẩm")
+            .join(", ");
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      closeModal();
+          const totalAmount = items.reduce((sum, item) => {
+            return sum + ((item.price || 0) * (item.quantity || 0));
+          }, 0);
+
+          return {
+            id: order.orderID,
+            invoiceCode: `DH${String(order.orderID).padStart(5, '0')}`, 
+            customerName: order.address?.receiverName || order.buyer?.fullName || "Khách hàng",
+            customerPhone: order.address?.phone || "N/A",
+            detailAddress: order.address?.detailAddress || "",
+            productName: productNames || "Không có thông tin sản phẩm",
+            totalPrice: totalAmount,
+            paymentStatus: order.paymentStatus,
+            shippingStatus: order.shippingStatus,
+            orderDate: order.orderDate ? new Date(order.orderDate).toLocaleDateString("vi-VN") : "---",
+            rawItems: items
+          };
+        });
+
+        setInvoices(formattedOrders);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
+
+  const getShippingStatusText = (status) => {
+    switch (status) {
+      case "Pending": return "Chờ xử lý";
+      case "Shipping": return "Đang giao hàng";
+      case "Confirmed": return "Đã nhận";
+      default: return status || "Chưa rõ";
     }
-  };
-
-  const renderStatusText = (status) => {
-    if (status === "chua-tra") return "Chưa trả";
-    if (status === "dung-han") return "Trả đúng hạn";
-    if (status === "tra-muon") return "Trả muộn";
-    return "";
   };
 
   // Logic tìm kiếm
@@ -93,15 +78,12 @@ export default function ShopInvoice() {
 
     return invoices.filter((inv) => {
       const keyword = searchKeyword.toLowerCase();
-
       return (
         inv.invoiceCode.toLowerCase().includes(keyword) ||
         inv.customerName.toLowerCase().includes(keyword) ||
         inv.customerPhone.toLowerCase().includes(keyword) ||
-        inv.bookName.toLowerCase().includes(keyword) ||
-        inv.price.toLowerCase().includes(keyword) ||
-        inv.orderDate.toLowerCase().includes(keyword) ||
-        inv.receiveDate.toLowerCase().includes(keyword)
+        inv.productName.toLowerCase().includes(keyword) ||
+        inv.orderDate.toLowerCase().includes(keyword)
       );
     });
   }, [searchKeyword, invoices]);
@@ -115,6 +97,9 @@ export default function ShopInvoice() {
       handleSearch();
     }
   };
+
+  if (loading) return <div className="main-content-admin"><p>Đang tải danh sách hóa đơn...</p></div>;
+  if (error) return <div className="main-content-admin"><p style={{ color: "red" }}>Lỗi: {error}</p></div>;
 
   return (
     <div className="main-content-admin">
@@ -141,14 +126,13 @@ export default function ShopInvoice() {
               <table className="invoice-table">
                   <thead>
                       <tr>
-                      <th>Mã hóa đơn</th>
-                      <th>Tên khách hàng</th>
-                      <th>Số điện thoại</th>
-                      <th>Tên sản phẩm</th>
-                      <th>Hình ảnh</th>
-                      <th>Thành tiền</th>
-                      <th>Ngày đặt</th>
-                      <th>Ngày nhận</th>
+                      <th>Mã đơn hàng</th>
+                        <th>Tên người nhận</th>
+                        <th>Số điện thoại</th>
+                        <th>Sản phẩm đặt</th>
+                        <th>Tổng thanh toán</th>
+                        <th>Ngày đặt</th>
+                        <th>Trạng thái giao hàng</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -156,19 +140,19 @@ export default function ShopInvoice() {
                       <tr
                           key={inv.id}
                           data-status={inv.status}
-                          onClick={() => openModal(inv)}
                           style={{ cursor: "pointer" }}
                       >
                           <td>{inv.invoiceCode}</td>
                           <td>{inv.customerName}</td>
                           <td>{inv.customerPhone}</td>
-                          <td>{inv.bookName}</td>
-                          <td>
-                          <img src={inv.image} alt="logo" />
-                          </td>
-                          <td>{inv.price}</td>
+                          <td>{inv.productName}</td>
+                          <td>{inv.totalPrice.toLocaleString("vi-VN")} đ</td>
                           <td>{inv.orderDate}</td>
-                          <td>{inv.receiveDate}</td>
+                          <td>
+                            <span className={`status-badge ${inv.shippingStatus?.toLowerCase()}`}>
+                              {getShippingStatusText(inv.shippingStatus)}
+                            </span>
+                          </td>
                       </tr>
                       ))}
                   </tbody>

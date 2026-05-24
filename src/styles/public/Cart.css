@@ -69,7 +69,6 @@ html, body {
 .shopName {
     color: #f56c42;
     margin: 10px 0;
-    cursor: pointer;
     display: flex;
     flex-direction: row;
     gap: 10px;
@@ -96,9 +95,10 @@ html, body {
 .shop-items-img {
     border-radius: 8px;
     height: 80px;
-    width: 60px;
+    width: 50px;
     box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .item-name {
