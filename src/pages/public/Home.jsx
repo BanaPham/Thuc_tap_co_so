@@ -155,6 +155,11 @@ export default function Home() {
         }
     };
 
+    const renderStars = (score) => {
+        const positiveStars = Math.round(score || 5); 
+        return "⭐".repeat(positiveStars) + "☆".repeat(5 - positiveStars);
+    };
+
     return (
         <div className='home'>
             {/* Thanh điều hướng bên trái được tạo động và có sự kiện Click */}
@@ -204,8 +209,8 @@ export default function Home() {
                                         {item.productName || "Sản phẩm chưa có tên"}
                                     </div>
                                     
-                                    <div className="product_rating">
-                                        {"⭐".repeat(Math.max(0, Math.min(5, Math.round(item.rating || 5))))}
+                                    <div className="rating">
+                                        {renderStars(item.rating)}
                                         <span className="product_sold">
                                             {item.soldCount > 0 ? ` Đã bán ${item.soldCount}` : ""}
                                         </span>
