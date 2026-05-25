@@ -89,8 +89,17 @@ export default function Header() {
   return (
     <header className="header">
       {/* Logo Section */}
-      <div className="header__logo">
-        <Link to="/home" className="header__logo-link"onClick={() => setSearchTerm("")}>
+      <div className="header__logo" >
+        <Link to="/home"
+          className="header__logo-link"
+          onClick={(e) => {
+            setSearchTerm("");
+            if (window.location.pathname === "/home") {
+              e.preventDefault();
+              window.location.reload();
+            }
+          }}
+        >
           <h2 className="header__logo-title">
             <img src={logo} alt="logo" className="header__logo-img"/>
             ShopZone
