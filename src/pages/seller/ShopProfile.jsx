@@ -648,15 +648,6 @@ export default function ShopProfile() {
                             />
                             <input 
                                 type="text" 
-                                placeholder="Dành cho đơn từ ..." 
-                                value={newVoucher.target}
-                                onChange={e => {
-                                    setNewVoucher({...newVoucher, target: e.target.value});
-                                    setError("");
-                                }} 
-                            />
-                            <input 
-                                type="text" 
                                 placeholder="Số lượng" 
                                 value={newVoucher.total}
                                 onChange={e => {
